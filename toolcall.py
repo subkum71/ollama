@@ -33,9 +33,12 @@ Decides which tool to call
 Get_FruitOrigin() OR Get_Temp()
     ↓
 Tool Result
+Optional
+   Submit Result to LLM to get final response 
 '''
 import ollama
 from langchain_ollama import ChatOllama
+from langchain_core.messages import ToolMessage
 
 #Common Paramters
 Model_name="qwen3-vl:4b"
@@ -67,6 +70,7 @@ llm = ChatOllama(
         model= Model_name,
         temperature=0
 )
+
 # -----------------------------
 # Bind tools to LLM
 # -----------------------------
@@ -75,31 +79,45 @@ llm_with_tools = llm.bind_tools([
         Get_Temp
 ])
 
-def Call_LLM(question):
+def Call_LLM_Tools(question):
     print("Please wait processing your request ...")
-## Here llm return the required Tool calls 
+## 1. Ask LLM which tool it wants
     answer = llm_with_tools.invoke(question)
-   
-## Now need to call the Tool
+
+## Optional:  # 2. Store original response + tool results
+    messages = [answer]
+## 3. Now need to call the Tool
 ##Execute the requested tool
     for tool_call in answer.tool_calls:
         
         if tool_call["name"] == "Get_Temp":
             result = Get_Temp(**tool_call["args"])
-            print("My Answer :", result)
+            print("Tool Answer :", result)
         elif tool_call["name"] == "Get_FruitOrigin":
             result = Get_FruitOrigin(**tool_call["args"])
-            print("My Answern:", result)
+            print("Tool Answerb:", result)
         else:
          print ("My Answer : Out of my scope:Not able to answer")
+## Here result store the result from Tool not from LLM
+## This Can be given to user as response or send it back to LLM to give final response
+# 3. Add tool result -Optional
+    messages.append(
+        ToolMessage(
+                content=str(result),
+                tool_call_id=tool_call["id"]
+                    )
+        )
+#4. Send tool result back to LLM --Optional
+    final_answer = llm_with_tools.invoke(messages)
+    print ("Please wait for LLM final response ...")
+    print("LLM Response:",final_answer.content)
 
-
-print("Enter your question, City Name, Fruits to know weather/orign of Fruits")
+print("Enter your question, Limited to City Temp or Fruits Origin City !! ")
 while True:
     question = input("\nYou: ")
     if question.lower() == "exit":
         break
-    Call_LLM(question)
-    
+    Call_LLM_Tools(question)
+        
 
         
