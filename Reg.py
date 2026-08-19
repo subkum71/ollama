@@ -40,20 +40,60 @@ def get_SearchResult(Query_embeddinglist,  topresult=1):
       )
     return(results)
 
+# REG System 
+def reg_process(User_Query, semantic_result):
+    prompt=f"""
+           <context>
+                {semantic_result}
+          </context>
+        <question>
+          {User_Query}
+          </question>   
+          """
+    response = ollama.chat(
+      model=LLM_Model_name,
+      messages=[
+        {
+            "role": "system",
+            "content": "You are a helpful PMO assistant."
+        },
+        {
+            "role": "user",
+            "content": prompt
+        }
+      ],
+    options={
+        "temperature": 0.2,
+        "top_p": 0.9,
+        "top_k": 40,
+        "num_ctx": 4096,
+        "num_predict": 512
+        }
+      )
+    
+    print("LLM Response:")
+    print(response)
   #-----------------Calling Main---------------------------#
   
 print("Enter your question, type exit to end session")
 while True:
 
     User_Query = input("\nYou: ")
-
+    
     if User_Query.lower() == "exit":
         break
     print ("Wait getting semantic search results")
+    print("Wait processing ...")
     answers= get_SearchResult(Get_Userquery_Embeddings(User_Query))
-    print("Semantic Search Data:")
+   
     if answers :
-        print( answers["documents"][0])
+        print("Semantic Search:", answers["documents"][0])
+        context=f"""
+            Source: {answers["documents"][0]}
+            ID: {answers["ids"][0]}
+            Distance: {answers["distances"][0]}
+        """
+        reg_process(User_Query,context)
     else:
         print("No result from semantic search")
         
