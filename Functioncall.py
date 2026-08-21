@@ -2,6 +2,7 @@
 # Defining function which LLM will call to Answer your query
 # Function1 : Function for City Temparature
 # Function2 : Origin City for given Fruits 
+# Use of from langchain_core.tools import tool optional
 '''Tool definition given to Ollama
 tools = [
     {
@@ -39,13 +40,15 @@ Optional
 import ollama
 from langchain_ollama import ChatOllama
 from langchain_core.messages import ToolMessage
-
 #Common Paramters
 Model_name="qwen3-vl:4b"
 llm_with_tools=""
 
 # Get the City Temp
+# @tool --> The decorator turns your Python function into a LangChain BaseTool.
+
 def Get_Temp(city) -> str:
+    """Get City Temparature """ 
     temperatures = {
         "Delhi": "30°C",
         "Mumbai": "28°C",
@@ -54,8 +57,9 @@ def Get_Temp(city) -> str:
     }
     return f"The temperature in {city} is {temperatures.get(city, 'Not available')}"
 
-# Get the Origin of the Fruit 
+# Get the Origin of the Fruit
 def Get_FruitOrigin(fruit) -> str:
+    """Get Fruit Origin City Name."""     
     fruits = {
         "APPLE": ["Kashmir", "Himachal Pradesh"],
         "MANGO": ["Uttar Pradesh", "Maharashtra", "Andhra Pradesh"],
